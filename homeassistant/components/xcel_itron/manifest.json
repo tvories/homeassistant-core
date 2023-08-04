@@ -1,0 +1,14 @@
+{
+  "domain": "xcel_itron",
+  "name": "Xcel Itron Smart Meter",
+  "after_dependencies": ["zeroconf"],
+  "codeowners": ["@tvories"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/tvories/hass_xcel_itron",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": ["_smartenergy._tcp.local."]
+}

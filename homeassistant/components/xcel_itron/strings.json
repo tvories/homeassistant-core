@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "init": {
+        "description": "This integration requires that the Xcel Itron Smart Meter be connected to your network. This integration will attempt to help you connect your device to your network if you have not yet done so.\n\nIf your meter is already connected to your network, you can skip the setup.",
+        "data": {
+          "smart_meter_on_network": "Your smart meter is already on your network.",
+          "smart_meter_not_on_network": "Your smart meter is not yet on your network.",
+          "smart_meter_network_choice": "Is your smart meter on your network?"
+        }
+      },
+      "not_on_network": {
+        "description": "For detailed instructions on how to add your Smart Meter to your network see https://github.com/tvories/hass_xcel_itron/\nThe integration has generated a certificate and key for authenticating to your device. You need the LFDI shown below in order to [add your device to Xcel's device management page](https://my.xcelenergy.com/MyAccount/). Select Add a Device, paste in the below LFDI, give your device a nickname, use \"Itron\" as the Manufacturer, and set \"Type\" to \"Other\". It will take some time for Xcel to add your device to their system. You should receive an email when it's complete, and you can continue the integration here once the device is on your network.\n\n\n Your generated LFDI:\n\n`{lfdi}`\n\nCopy this LFDI for the Xcel Managed Devices page in your account.\n\nYou can also customize the directory where the cert and key are stored.",
+        "data": {
+          "now_on_network_choice": "My device is now on my network.",
+          "waiting_on_xcel_choice": "I'm waiting for Xcel to add my device to their system.",
+          "cert_dir": "Directory to store cert and key:"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  }
+}

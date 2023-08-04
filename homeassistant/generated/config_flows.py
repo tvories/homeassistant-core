@@ -597,6 +597,7 @@ FLOWS = {
         "ws66i",
         "wyoming",
         "xbox",
+        "xcel_itron",
         "xiaomi_aqara",
         "xiaomi_ble",
         "xiaomi_miio",
