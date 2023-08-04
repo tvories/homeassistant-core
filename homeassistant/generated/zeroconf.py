@@ -644,6 +644,11 @@ ZEROCONF = {
             "name": "slzb-06*",
         },
     ],
+    "_smartenergy._tcp.local.": [
+        {
+            "domain": "xcel_itron",
+        },
+    ],
     "_sonos._tcp.local.": [
         {
             "domain": "sonos",

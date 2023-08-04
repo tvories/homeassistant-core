@@ -5529,6 +5529,12 @@
       "config_flow": true,
       "iot_class": "local_polling"
     },
+    "taylor_test": {
+      "name": "taylor testing",
+      "integration_type": "hub",
+      "config_flow": true,
+      "iot_class": "local_polling"
+    },
     "tcp": {
       "name": "TCP",
       "integration_type": "hub",
@@ -6331,6 +6337,12 @@
       "name": "Heyu X10",
       "integration_type": "hub",
       "config_flow": false,
+      "iot_class": "local_polling"
+    },
+    "xcel_itron": {
+      "name": "Xcel Itron Smart Meter",
+      "integration_type": "hub",
+      "config_flow": true,
       "iot_class": "local_polling"
     },
     "xeoma": {
