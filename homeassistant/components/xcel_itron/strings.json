@@ -10,12 +10,15 @@
         }
       },
       "not_on_network": {
-        "description": "For detailed instructions on how to add your Smart Meter to your network see https://github.com/tvories/hass_xcel_itron/\nThe integration has generated a certificate and key for authenticating to your device. You need the LFDI shown below in order to [add your device to Xcel's device management page](https://my.xcelenergy.com/MyAccount/). Select Add a Device, paste in the below LFDI, give your device a nickname, use \"Itron\" as the Manufacturer, and set \"Type\" to \"Other\". It will take some time for Xcel to add your device to their system. You should receive an email when it's complete, and you can continue the integration here once the device is on your network.\n\n\n Your generated LFDI:\n\n`{lfdi}`\n\nCopy this LFDI for the Xcel Managed Devices page in your account.\n\nYou can also customize the directory where the cert and key are stored.",
+        "description": "For detailed instructions on how to add your Smart Meter to your network see https://github.com/tvories/hass_xcel_itron/\nThe integration has generated a certificate and key for authenticating to your device. You need the LFDI shown below in order to [add your device to Xcel's device management page](https://my.xcelenergy.com/MyAccount/). Select Add a Device, paste in the below LFDI, give your device a nickname, use \"Itron\" as the Manufacturer, and set \"Type\" to \"Other\". It will take some time for Xcel to add your device to their system. You should receive an email when it's complete, and you can continue the integration here once the device is on your network.\n\n\n Your generated LFDI:\n\n```\n{lfdi}\n```\n\nCopy this LFDI for the Xcel Managed Devices page in your account.\n\nYour genrated Certificate (This will be stored in the directory you specify, but you can copy it if you want for your own records):\n\n```\n{certificate}\n```\n\nYour generated Key (This will be stored in the directory you specify, but you can copy it if you want for your own records):\n\n```\n{key}\n```\n\nYou can also customize the directory where the cert and key are stored.\n",
         "data": {
           "now_on_network_choice": "My device is now on my network.",
           "waiting_on_xcel_choice": "I'm waiting for Xcel to add my device to their system.",
           "cert_dir": "Directory to store cert and key:"
         }
+      },
+      "waiting_on_xcel": {
+        "description": "You should receive an email when Xcel has added your device to their system. Once you receive that email, your device should be on the network and you can start this wizard over again. Discovery may also work and prompt you to configure your device once it's discoverd on the network."
       }
     },
     "error": {
@@ -24,7 +27,9 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "waiting_on_xcel": "You should receive an email when Xcel has added your device to their system. Once you receive that email, your device should be on the network and you can start this wizard over again. Discovery may also work and prompt you to configure your device once it's discoverd on the network.",
+      "on_network": "Aborting but for a good reason! We haven't written the connection yet."
     }
   }
 }

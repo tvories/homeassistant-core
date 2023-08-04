@@ -2,20 +2,23 @@
 from __future__ import annotations
 
 import logging
+import os
 import selectors
 from typing import Any
 
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import selector
+from homeassistant.helpers import selector, config_validation as cv
 
 from .const import (
-    CONF_CERT_DIR,
-    CONF_LFDI,
+    CONF_CERTIFICATE,
+    CONF_DEVICE_NAME,
+    CONF_KEY,
     CONF_NOT_ON_NETWORK_STAGE_CHOICE,
     CONF_NOW_ON_NETWORK_CHOICE,
     CONF_SMART_METER_NETWORK_CHOICE,
@@ -23,16 +26,31 @@ from .const import (
     CONF_SMART_METER_ON_NETWORK,
     CONF_WAITING_ON_XCEL_CHOICE,
     DEFAULT_CERT_DIR,
+    DEFAULT_DEVICE_NAME,
+    DEFAULT_FILE_ENCODING,
+    DEFAULT_GENERATED_CERT_FILENAME,
+    DEFAULT_GENERATED_KEY_FILENAME,
+    DEFAULT_PORT,
     DOMAIN,
 )
-from .helpers import generate_cert_and_key
+from .helpers import generate_cert_and_key, get_lfdi, get_existing_cert_and_key
 
 _LOGGER = logging.getLogger(__name__)
 
 # TODO adjust the data schema to the data that you need
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("host"): str,
+        vol.Required(CONF_HOST): str,
+    }
+)
+
+STEP_ON_NETWORK_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_DEVICE_NAME): str,
+        vol.Required(CONF_HOST):  str,
+        vol.Required(CONF_PORT): str,
+        vol.Required(CONF_CERTIFICATE): str,
+        vol.Required(CONF_KEY): str,
     }
 )
 
@@ -138,9 +156,6 @@ class XcelItronConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             ],
                         ),
                     ),
-                    vol.Required(CONF_LFDI, default=self.lfdi): selector.TextSelector(
-                        selector.TextSelectorType.TEXT,
-                    )
                 }
             ),
         )
@@ -149,16 +164,61 @@ class XcelItronConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle meter not yet on network setup."""
-        # Generate certificate and key files and pull LFDI
-        generated_files = generate_cert_and_key()
-        self.lfdi = generated_files["lfdi"]
-        self.certificate = generated_files["certificate"]
-        self.key = generated_files["private_key"]
+        # Check for existing cert and key files
+        already_generated_files = get_existing_cert_and_key(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR)
+        # This is likely the first time the user is setting up the integration so we generate the files
+        if not already_generated_files and not self.lfdi and not self.certificate and not self.key:
+            _LOGGER.info("Generating new certificate and key files")
+            generated_files = generate_cert_and_key()
+            self.lfdi = generated_files["lfdi"]
+            self.certificate = generated_files["certificate"]
+            self.key = generated_files["private_key"]
+        elif not self.lfdi and not self.certificate and not self.key: # the user has already run the integration and we don't want to overrite the previously generated files
+            _LOGGER.info("Generated files have been found, using them instead of regenerating")
+            self.lfdi = already_generated_files["lfdi"]
+            self.certificate = already_generated_files["certificate"]
+            self.key = already_generated_files["private_key"]
+
+        if (
+            # we are still waiting on xcel to set up our device
+            user_input is not None
+            and user_input[CONF_NOT_ON_NETWORK_STAGE_CHOICE] == CONF_WAITING_ON_XCEL_CHOICE
+        ):
+
+            # Write the generated files to the default directory
+            # Ensure the directory exists, create it if needed
+            if not os.path.exists(os.path.join(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR)):
+                os.makedirs(os.path.join(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR))
+            cert_file_path = os.path.join(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR, DEFAULT_GENERATED_CERT_FILENAME)
+            with open(cert_file_path, "w", encoding=DEFAULT_FILE_ENCODING) as cert_file:
+                cert_file.write(self.certificate)
+
+            # Write the key
+            key_file_path = os.path.join(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR, DEFAULT_GENERATED_KEY_FILENAME)
+            with open(key_file_path, "w", encoding=DEFAULT_FILE_ENCODING) as key_file:
+                key_file.write(self.key)
+
+
+            return self.async_abort(reason="waiting_on_xcel")
+        if (
+            # our device is now on the network
+            user_input is not None
+            and user_input[CONF_NOT_ON_NETWORK_STAGE_CHOICE] == CONF_NOW_ON_NETWORK_CHOICE
+        ):
+            return await self.async_step_on_network()
 
         if user_input is None:
+            # Check for existing certificate and key files. By default, we save generated files
+            # to the DEFAULT_CERT_DIR until the user specifies a different directory.
+
+
             return self.async_show_form(
                 step_id="not_on_network",
-                description_placeholders={"lfdi": self.lfdi},
+                description_placeholders={
+                    "lfdi": self.lfdi,
+                    "certificate": self.certificate,
+                    "key": self.key,
+                },
                 data_schema=vol.Schema(
                     {
                         vol.Required(
@@ -178,10 +238,26 @@ class XcelItronConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 ],
                             ),
                         ),
-                        vol.Required(CONF_CERT_DIR, default=DEFAULT_CERT_DIR): str,
+                        # vol.Optional(CONF_CERT_DIR, default=os.path.join(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR)): str,
                     }
                 ),
             )
+
+    async def async_step_waiting_on_xcel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle letting a user know they need to come back to the integration once their device is on the network."""
+        if(user_input is not None):
+            return self.async_abort(reason="waiting_on_xcel")
+
+        return self.async_show_form(
+            step_id="waiting_on_xcel",
+            data_schema=vol.Schema({})
+        )
+
+
+
+
         # if (
         #     user_input is not None
         #     and self.discovered_meter is not None
@@ -206,6 +282,41 @@ class XcelItronConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         #     step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         # )
 
+    async def async_step_on_network(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle the integration with a meter on the network."""
+
+        if self.certificate is None or self.key is None:
+            # The integration is unaware of the cert or key so we check if there is are generated files
+            _LOGGER.info("Checking for already generated files")
+            already_generated_files = get_existing_cert_and_key(self.hass.config.path(DOMAIN), DEFAULT_CERT_DIR)
+            if already_generated_files is not None:
+                _LOGGER.info("Found existing files")
+                self.certificate = already_generated_files["certificate"]
+                self.key = already_generated_files["private_key"]
+                self.lfdi = already_generated_files["lfdi"]
+            else:
+                _LOGGER.info("No existing files found, user must provide them")
+
+        # if user_input is not None:
+        #     return self.async_create_entry(title="", data=user_input)
+        if user_input is not None:
+            return self.async_abort(reason="on_network")
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="on_network",
+                data_schema=vol.Schema(
+                    {
+                    vol.Required(CONF_DEVICE_NAME, default=DEFAULT_DEVICE_NAME): str,
+                    vol.Required(CONF_HOST, self.discovered_meter["host"]):  str,
+                    vol.Required(CONF_PORT, default=DEFAULT_PORT): str,
+                    vol.Required(CONF_CERTIFICATE, default=self.certificate): str,
+                    vol.Required(CONF_KEY, default=self.key): str,
+                    },
+                )
+            )
 
 class XcelItronOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle Xcel Itron options."""
