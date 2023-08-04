@@ -310,10 +310,14 @@ class XcelItronConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema(
                     {
                     vol.Required(CONF_DEVICE_NAME, default=DEFAULT_DEVICE_NAME): str,
-                    vol.Required(CONF_HOST, self.discovered_meter["host"]):  str,
+                    vol.Required(CONF_HOST):  str,
                     vol.Required(CONF_PORT, default=DEFAULT_PORT): str,
-                    vol.Required(CONF_CERTIFICATE, default=self.certificate): str,
-                    vol.Required(CONF_KEY, default=self.key): str,
+                    vol.Required(CONF_CERTIFICATE, default=self.certificate): selector.TextSelector(
+                            selector.TextSelectorConfig(multiline=True)
+                        ),
+                    vol.Required(CONF_KEY, default=self.key): selector.TextSelector(
+                            selector.TextSelectorConfig(multiline=True)
+                        ),
                     },
                 )
             )
