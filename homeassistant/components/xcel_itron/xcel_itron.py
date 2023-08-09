@@ -1,38 +1,35 @@
 import asyncio
 import logging
 import ssl
-import string
+from typing import Any
 import warnings
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Coroutine
-from dataclasses import dataclass
-from http import HTTPStatus
-from typing import Any, TypeVar
 
 import aiohttp
-from aiohttp import ClientSession
 
-CIPHERS = ('ECDHE')
-IEEE_PREFIX = '{urn:ieee:std:2030.5:ns}'
+CIPHERS = "ECDHE"
+IEEE_PREFIX = "{urn:ieee:std:2030.5:ns}"
 LOGGER = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
 class CCM8Adapter(aiohttp.TCPConnector):
     """A TransportAdapter that re-enables ECDHE support in aiohttp."""
+
     def __init__(self, *args, **kwargs) -> None:
         ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2, purpose=ssl.Purpose.CLIENT_AUTH)
         ssl_ctx.load_cert_chain(certfile=self._cert_path, keyfile=self._key_path)
         ssl_ctx.verify_mode = ssl.CERT_NONE  # Disabling SSL verification
         ssl_ctx.check_hostname = False
         ssl_ctx.set_ciphers(CIPHERS)
-        kwargs['ssl'] = ssl_ctx
+        kwargs["ssl"] = ssl_ctx
         super().__init__(*args, **kwargs)
+
 
 class Connection:
     def __init__(self, cert_path: str, key_path: str) -> None:
-
         if self.cert_path is None:
             raise ValueError("cert_path cannot be None")
         if self.key_path is None:
@@ -52,7 +49,6 @@ class Connection:
         session = aiohttp.ClientSession(connector=connector)
 
         return session
-
 
 
 class XcelItronSmartMeter:
@@ -75,7 +71,6 @@ class XcelItronSmartMeter:
         self._connection = Connection(cert_path, key_path)
         self._base_url = f"https://{self._host}:{self._port}"
 
-
     async def connect(self) -> None:
         """Establish a connection to the meter, sets and returns sFDI."""
 
@@ -86,7 +81,11 @@ class XcelItronSmartMeter:
             async with await self._connection.create_session() as session:
                 async with session.get(url, timeout=self._request_timeout) as response:
                     LOGGER.debug(f"Response from meter: {await response.text()}")
-                    self._sfdi = ET.fromstring(await response.text()).find(f'.//{IEEE_PREFIX}sFDI').text
+                    self._sfdi = (
+                        ET.fromstring(await response.text())
+                        .find(f".//{IEEE_PREFIX}sFDI")
+                        .text
+                    )
 
         except aiohttp.ClientError as err:
             raise ConnectionError("Error connecting to meter.") from err
@@ -114,10 +113,15 @@ class XcelItronSmartMeter:
             sFDI: The used sFDI
         """
         async with await self._connection.create_session() as session:
-                async with session.get(url, timeout=self._request_timeout) as response:
-                    LOGGER.debug(f"Response from meter: {await response.text()}")
-                    sfdi = ET.fromstring(await response.text()).find(f'.//{IEEE_PREFIX}sFDI').text
+            async with session.get(url, timeout=self._request_timeout) as response:
+                LOGGER.debug(f"Response from meter: {await response.text()}")
+                sfdi = (
+                    ET.fromstring(await response.text())
+                    .find(f".//{IEEE_PREFIX}sFDI")
+                    .text
+                )
         return sfdi
+
 
 # async def main():
 #     meter = XcelItronSmartMeter(host="192.168.50.64", port=8081, cert_path="./config/xcel_itron/certs/_generated_xcel_itron_cert.pem", key_path="./config/xcel_itron/certs/_generated_xcel_itron_key.pem")

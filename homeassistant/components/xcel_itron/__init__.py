@@ -4,11 +4,10 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-# from homeassistant.helpers import Entity
-
-from .xcel_itron import XcelItronSmartMeter
 
 from .const import DOMAIN
+
+# from homeassistant.helpers import Entity
 
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [Platform.SENSOR]
@@ -34,6 +33,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
 
 # class XcelItronDevice(Entity):
 #     """Representation of an Xcel Itron device entity."""

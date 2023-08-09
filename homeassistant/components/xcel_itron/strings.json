@@ -19,7 +19,7 @@
       },
       "on_network": {
         "description": "If your Xcel Itron Smart Meter is already on your network, you will need the certificate and key that is linked to the LFDI you used to join the meter to your Xcel account. If you used this integration to generate the certificate and key, then the form should have auto-filled the values in the below text fields. If you already had a certificate and key generated outside of this integration, you will need to paste in the contents of the certificate and key here.",
-        "data" : {
+        "data": {
           "device_name": "Device Name",
           "host": "[%key:common::config_flow::data::host%]",
           "port": "[%key:common::config_flow::data::port%]",
