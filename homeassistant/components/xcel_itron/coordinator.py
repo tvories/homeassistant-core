@@ -2,19 +2,19 @@ import logging
 
 import async_timeout
 
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from .const import DOMAIN, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class XcelItronCoordinator(DataUpdateCoordinator):
-    """Gather data for the smart meter"""
+    """Gather data for the smart meter."""
 
     def __init__(self, hass, api) -> None:
         """Initialize the coordinator."""
