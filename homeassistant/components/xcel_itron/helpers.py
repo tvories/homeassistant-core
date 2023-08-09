@@ -85,6 +85,8 @@ def get_existing_cert_and_key(hass_path: str, path: str) -> dict:
             "certificate": cert,
             "private_key": key,
             "lfdi": get_lfdi(cert),
+            "cert_path": cert_path,
+            "key_path": key_path,
         }
     else:
         return None
