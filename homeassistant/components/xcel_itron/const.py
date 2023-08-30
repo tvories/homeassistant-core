@@ -4,7 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "xcel_itron"
 
-UPDATE_INTERVAL = timedelta(seconds=5)
+UPDATE_INTERVAL = timedelta(seconds=10)
 
 # Component configuration items
 CONF_CERT_PATH = "cert_path"

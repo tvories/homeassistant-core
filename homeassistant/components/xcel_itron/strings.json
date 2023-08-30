@@ -43,5 +43,10 @@
       "waiting_on_xcel": "You should receive an email when Xcel has added your device to their system. Once you receive that email, your device should be on the network and you can start this wizard over again. Discovery may also work and prompt you to configure your device once it's discoverd on the network.",
       "on_network": "Aborting but for a good reason! We haven't written the connection yet."
     }
+  },
+  "sensor": {
+    "active_power_w": {
+      "name": "Active power"
+    }
   }
 }
