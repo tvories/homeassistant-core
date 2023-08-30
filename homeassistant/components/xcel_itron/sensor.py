@@ -1,8 +1,9 @@
 """Support for Xcel Itron Smart Meter energy sensor."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
+from typing import cast, Final
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -23,21 +24,20 @@ from .const import ATTR_CURRENT_POWER_W, DOMAIN
 class XcelItronSensorEntityDescription(SensorEntityDescription):
     """Describes Xcel Itron sensor entity."""
 
-    emeter_attr: str | None = None
-    precision: int | None = None
+    value: Callable | None = None
 
 
-ENERGY_SENSORS: tuple[XcelItronSensorEntityDescription, ...] = (
+SENSORS: Final[tuple[XcelItronSensorEntityDescription, ...]] = (
     XcelItronSensorEntityDescription(
-        key=ATTR_CURRENT_POWER_W,
+        key="active_power_w",
+        translation_key="active_power_w",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        name="Current Consumption",
-        emeter_attr="power",
-        precision=1,
     ),
 )
+
+#TODO: add the rest of the sensors
 
 
 def async_emeter_from_device(
